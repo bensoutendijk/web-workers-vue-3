@@ -1,85 +1,117 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { computed, ref } from "vue";
+import { useMatrixWorker } from "@/composables/useMatrixWorker";
+
+const a = computed(() => {
+  let count = 1;
+  const result = new Array(rowCount.value);
+
+  for (let i = 0; i < rowCount.value; i++) {
+    result[i] = new Array(columnCount.value);
+    for (let j = 0; j < columnCount.value; j++) {
+      result[i][j] = count++;
+    }
+  }
+
+  return result;
+});
+
+const b = computed(() => {
+  let count = 1;
+  const result = new Array(columnCount.value);
+
+  for (let i = 0; i < columnCount.value; i++) {
+    result[i] = new Array(rowCount.value);
+    for (let j = 0; j < rowCount.value; j++) {
+      result[i][j] = count++;
+    }
+  }
+
+  return result;
+});
+
+const countOptions = ref([2, 3, 200, 300, 20000, 30000]);
+const rowCount = ref(2);
+const columnCount = ref(3);
+
+const { result, fetching } = useMatrixWorker(a, b);
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div class="container">
+    <div class="control-container">
+      <label v-for="option in countOptions" :key="option">
+        <input type="radio" :value="option" v-model="rowCount" />
+        {{ option }}
+      </label>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+      <label v-for="option in countOptions" :key="option">
+        <input type="radio" :value="option" v-model="columnCount" />
+        {{ option }}
+      </label>
     </div>
-  </header>
+    <div class="matrix-container">
+      <div class="table-container">
+        <table class="matrix-table" v-if="a">
+          <tr v-for="(row, i) in a" :key="`r-${i}`">
+            <td v-for="(number, j) in row" :key="`d-${j}`">{{ number }}</td>
+          </tr>
+        </table>
+      </div>
+      <span>&times;</span>
+      <div class="table-container">
+        <table class="matrix-table" v-if="b">
+          <tr v-for="(row, i) in b" :key="`r-${i}`">
+            <td v-for="(number, j) in row" :key="`d-${j}`">{{ number }}</td>
+          </tr>
+        </table>
+      </div>
+      <span>&equals;</span>
 
-  <RouterView />
+      <div class="table-container">
+        <div class="loading" v-if="fetching">
+          <h1>Loading</h1>
+        </div>
+        <table class="matrix-table result" v-else-if="result">
+          <tr v-for="(row, i) in result" :key="`r-${i}`">
+            <td v-for="(number, j) in row" :key="`d-${j}`">{{ number }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+.matrix-container {
+  align-self: center;
+  display: grid;
+  gap: 1em;
+  grid-template-columns: 1fr min-content 1fr min-content 1fr;
+  grid-template-rows: 1fr;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.matrix-container > span {
+  font-size: 1.5em;
+  align-self: center;
+  justify-self: center;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
+.matrix-table {
+  padding: 1em;
+  border: 1px solid black;
+  background-color: salmon;
+  color: black;
+  font-family: monospace;
+  font-size: 1.5em;
   text-align: center;
-  margin-top: 2rem;
+  height: 100%;
+  width: 100%;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.table-container {
+  height: 300px;
+  width: 400px;
+  overflow: auto;
 }
 </style>
